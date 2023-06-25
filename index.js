@@ -1,4 +1,3 @@
-#!/user/bin/env node
 
 const fs = require("fs");
 const path = require("path");
@@ -6,8 +5,8 @@ const dirTree = require("directory-tree");
 const chokidar = require("chokidar");
 const { spawn, exec, execSync } = require("child_process");
 const { rimrafSync } = require("rimraf");
-const dayjs = require('dayjs');
-var git = require('git-rev-sync');
+const dayjs = require("dayjs");
+var git = require("git-rev-sync");
 
 const docdir = process.argv.slice(2)[0] || process.cwd();
 
@@ -100,7 +99,6 @@ const makeConfig = () => {
   const sidebar = config.themeConfig.sidebar || [];
   config.themeConfig.sidebar = [...sidebar, ...getSidebar()].filter(Boolean);
 
-
   if (!fs.existsSync(dotvitepress)) {
     fs.mkdirSync(dotvitepress, { recursive: true });
   }
@@ -122,10 +120,10 @@ const autogit = () => {
   if (!gitEnv.gitDir || !gitEnv.gitBin) {
     return;
   }
-  const changed = git.hasUnstagedChanges()
+  const changed = git.hasUnstagedChanges();
   if (changed && +Date.now() - gitEnv.lastSync > 5 * 60 * 1000) {
     gitEnv.lastSync = +Date.now();
-    const now = dayjs().format('YYYY/MM/DD HH:mm:ss');
+    const now = dayjs().format("YYYY/MM/DD HH:mm:ss");
     exec(
       `git add . && git commit -m 'autosave at ${now}' && git push `,
       {
@@ -135,7 +133,7 @@ const autogit = () => {
         if (err) {
           console.error("ERROR AT: git autosave " + err);
         } else {
-          console.log("自动保存于:" + now)
+          console.log("自动保存于:" + now);
         }
       }
     );
@@ -146,24 +144,29 @@ const workhard = () => {
   rimrafSync(working, {
     filter: (x) => !/\.vitepress/.test(x),
   });
-  fs.cpSync(docRoot, working, { recursive: true, filter: (x) => ignored.test(x) });
+  fs.cpSync(docRoot, working, {
+    recursive: true,
+    filter: (x) => ignored.test(x),
+  });
   makeConfig();
   autogit();
 };
 
-chokidar.watch(docRoot, { interval: 2000 }).on("all", () => {
+module.exports.run = () => {
+  chokidar.watch(docRoot, { interval: 2000 }).on("all", () => {
+    workhard();
+  });
+
+  spawn(
+    "npx vitepress dev " + working,
+    {
+      shell: true,
+      // stdio: 'inherit'
+    },
+    (err, std) => {
+      console.log(std);
+    }
+  );
+
   workhard();
-});
-
-spawn(
-  "npx vitepress dev " + working,
-  {
-    shell: true,
-    // stdio: 'inherit'
-  },
-  (err, std) => {
-    console.log(std);
-  }
-);
-
-workhard();
+};

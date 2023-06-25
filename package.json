@@ -1,9 +1,10 @@
 {
   "name": "gitmd",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "bin": {
-    "gitmd": "index.js"
+    "gitmd": "bin.js"
   },
+  "main": "index.js",
   "devDependencies": {
     "@types/node": "^20.3.1"
   },
