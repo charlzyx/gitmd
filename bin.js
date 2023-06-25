@@ -1,6 +1,5 @@
-#!/user/bin/env node
+#!/usr/bin/env node
 
-
-const run = require('./index').run;
+const run = require('./index.js').run;
 
 run()
