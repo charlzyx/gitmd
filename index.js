@@ -145,6 +145,7 @@ const workhard = () => {
   rimrafSync(working, {
     filter: (x) => !/\.vitepress/.test(x),
   });
+  console.log("cp from, to ", docRoot, working)
   fs.cpSync(docRoot, working, {
     recursive: true,
     filter: (x) => ignored.test(x),
