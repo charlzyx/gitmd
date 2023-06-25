@@ -119,7 +119,10 @@ const gitmd = (docdir) => {
     if (!gitEnv.gitDir || !gitEnv.gitBin) {
       return;
     }
+    const pre = process.cwd();
+    process.chdir(docRoot);
     const changed = git.hasUnstagedChanges();
+    process.chdir(pre);
     if (!changed) return;
     const now = dayjs().format("YYYY/MM/DD HH:mm:ss");
     exec(
@@ -141,26 +144,37 @@ const gitmd = (docdir) => {
     rimrafSync(WORKING_DIR, {
       filter: (x) => !/\.vitepress/.test(x),
     });
-    fs.cpSync(docRoot, WORKING_DIR, {
-      recursive: true,
-      filter: (x) => ignored.test(x),
-    });
+    try {
+      fs.cpSync(docRoot, WORKING_DIR, {
+        recursive: true,
+        filter: (x) => !ignored.test(x),
+      });
+    } catch (error) {
+      console.error("copy error", error);
+    }
+
     makeConfig();
     autogit();
   };
 
   return {
     server() {
-      return spawn(
-        "npx vitepress dev " + WORKING_DIR,
-        {
-          shell: true,
-          stdio: "inherit",
-        },
-        (err, std) => {
-          console.log(err, std);
-        }
-      );
+      return require("portfinder")
+        .getPortPromise()
+        .then((port) => {
+          const cli = `npx vitepress dev ${WORKING_DIR} --port=${port}`;
+          spawn(
+            cli,
+            {
+              shell: true,
+              stdio: "inherit",
+            },
+            (err, std) => {
+              console.log(err, std);
+            }
+          );
+          return port;
+        });
     },
     worker() {
       workhard();
