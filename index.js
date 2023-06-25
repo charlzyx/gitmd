@@ -3,7 +3,6 @@
 const fs = require("fs");
 const path = require("path");
 const dirTree = require("directory-tree");
-const chokidar = require("chokidar");
 const { spawn, exec, execSync } = require("child_process");
 const { rimrafSync } = require("rimraf");
 const dayjs = require("dayjs");
@@ -121,30 +120,27 @@ const gitmd = (docdir) => {
       return;
     }
     const changed = git.hasUnstagedChanges();
-    if (changed && +Date.now() - gitEnv.lastSync > 5 * 60 * 1000) {
-      gitEnv.lastSync = +Date.now();
-      const now = dayjs().format("YYYY/MM/DD HH:mm:ss");
-      exec(
-        `git add . && git commit -m 'autosave at ${now}' && git push `,
-        {
-          cwd: docRoot,
-        },
-        (err) => {
-          if (err) {
-            console.error("ERROR AT: git autosave " + err);
-          } else {
-            console.log("自动保存于:" + now);
-          }
+    if (!changed) return;
+    const now = dayjs().format("YYYY/MM/DD HH:mm:ss");
+    exec(
+      `git add . && git commit -m 'autosave at ${now}' && git push `,
+      {
+        cwd: docRoot,
+      },
+      (err) => {
+        if (err) {
+          console.error("ERROR AT: git autosave " + err);
+        } else {
+          console.log("自动保存于:" + now);
         }
-      );
-    }
+      }
+    );
   };
 
   const workhard = () => {
     rimrafSync(WORKING_DIR, {
       filter: (x) => !/\.vitepress/.test(x),
     });
-    console.log("cp from, to ", docRoot, WORKING_DIR);
     fs.cpSync(docRoot, WORKING_DIR, {
       recursive: true,
       filter: (x) => ignored.test(x),
@@ -153,23 +149,22 @@ const gitmd = (docdir) => {
     autogit();
   };
 
-  return function run() {
-    chokidar.watch(docRoot, { interval: 2000 }).on("all", () => {
+  return {
+    server() {
+      return spawn(
+        "npx vitepress dev " + WORKING_DIR,
+        {
+          shell: true,
+          stdio: "inherit",
+        },
+        (err, std) => {
+          console.log(err, std);
+        }
+      );
+    },
+    worker() {
       workhard();
-    });
-
-    spawn(
-      "npx vitepress dev " + WORKING_DIR,
-      {
-        shell: true,
-        stdio: "inherit",
-      },
-      (err, std) => {
-        console.log(std);
-      }
-    );
-
-    workhard();
+    },
   };
 };
 
