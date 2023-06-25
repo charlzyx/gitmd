@@ -1,6 +1,6 @@
 {
   "name": "gitmd",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "bin": {
     "gitmd": "index.js"
   },
@@ -11,6 +11,7 @@
     "chokidar": "^3.5.3",
     "dayjs": "^1.11.8",
     "directory-tree": "^3.5.1",
+    "git-rev-sync": "^3.0.2",
     "rimraf": "^5.0.1",
     "vitepress": "^1.0.0-beta.3"
   }

@@ -7,6 +7,7 @@ const chokidar = require("chokidar");
 const { spawn, exec, execSync } = require("child_process");
 const { rimrafSync } = require("rimraf");
 const dayjs = require('dayjs');
+var git = require('git-rev-sync');
 
 const docdir = process.argv.slice(2)[0] || process.cwd();
 
@@ -121,36 +122,23 @@ const autogit = () => {
   if (!gitEnv.gitDir || !gitEnv.gitBin) {
     return;
   }
-  // 2分钟保存一次
-  if (+Date.now() - gitEnv.lastSync > 5 * 60 * 1000) {
+  const changed = git.hasUnstagedChanges()
+  if (changed && +Date.now() - gitEnv.lastSync > 5 * 60 * 1000) {
     gitEnv.lastSync = +Date.now();
-    exec("git pull --ff", { cwd: docRoot }, (err) => {
-      if (err) {
-        console.error("ERROR AT: git pull --ff " + err);
-      } else {
-        let isClean = false;
-        try {
-          isClean = /干净|clean/.test(execSync('git status', { cwd: docRoot }).toString())
-          if (isClean) return;
-        } catch (error) {
-          return;
+    const now = dayjs().format('YYYY/MM/DD HH:mm:ss');
+    exec(
+      `git add . && git commit -m 'autosave at ${now}' && git push `,
+      {
+        cwd: docRoot,
+      },
+      (err) => {
+        if (err) {
+          console.error("ERROR AT: git autosave " + err);
+        } else {
+          console.log("自动保存于:" + now)
         }
-       const now = dayjs().format('YYYY/MM/DD HH:mm:ss');
-        exec(
-          `git add . && git commit -m 'autosave at ${now}' && git push `,
-          {
-            cwd: docRoot,
-          },
-          (err) => {
-            if (err) {
-              console.error("ERROR AT: git autosave " + err);
-            } else {
-              console.log("自动保存于:" + now)
-            }
-          }
-        );
       }
-    });
+    );
   }
 };
 
