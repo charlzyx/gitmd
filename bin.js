@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
-const run = require('./index.js').run;
+const gitmd = require("./index.js");
 
-run()
+const docdir = process.argv.slice(2)[0] || process.cwd();
+
+gitmd(docdir)
