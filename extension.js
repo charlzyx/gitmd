@@ -1,5 +1,5 @@
 const vscode = require("vscode");
-const chokidar = require('chokidar');
+const chokidar = require("chokidar");
 
 const ignored = /(^|[\/\\])\..|node_modules/;
 
@@ -20,20 +20,22 @@ function activate(context) {
     setTimeout(() => {
       vscode.commands.executeCommand("vscode.open", link);
     }, 1000);
-    context.subscriptions.push(kill)
+    context.subscriptions.push(() => kill());
   });
 
   const dispose = vscode.workspace.onDidSaveTextDocument(() => {
     gitmd.worker(onErr);
   });
 
-  const watcher = chokidar.watch(cwd, { interval: 2000, ignored: ignored }).on("all", () => {
-    gitmd.worker(onErr);
-  });
+  const watcher = chokidar
+    .watch(cwd, { interval: 2000, ignored: ignored })
+    .on("all", () => {
+      gitmd.worker(onErr);
+    });
 
   context.subscriptions.push(dispose);
   context.subscriptions.push(() => {
-    watcher.close()
+    watcher.close();
   });
 }
 

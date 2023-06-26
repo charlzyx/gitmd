@@ -123,7 +123,8 @@ const gitmd = (docdir) => {
     const pre = process.cwd();
     try {
       process.chdir(docRoot);
-      const changed = git.hasUnstagedChanges();
+      const dirty = git.isDirty();
+      const changed = dirty || git.hasUnstagedChanges();
       process.chdir(pre);
       if (!changed) return;
     } catch (error) {
@@ -191,9 +192,12 @@ const gitmd = (docdir) => {
               console.log(err, std);
             }
           );
-          return {port, kill: () => {
-            spawn('kill', [child.pid])
-          }};
+          return {
+            port,
+            kill: () => {
+              spawn("kill", [child.pid]);
+            },
+          };
         });
     },
     worker(onErr = noop) {
