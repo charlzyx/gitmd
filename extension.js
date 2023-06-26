@@ -20,7 +20,11 @@ function activate(context) {
     setTimeout(() => {
       vscode.commands.executeCommand("vscode.open", link);
     }, 1000);
-    context.subscriptions.push(() => kill());
+    context.subscriptions.push({
+      dispose() {
+        kill()
+      }
+    });
   });
 
   const dispose = vscode.workspace.onDidSaveTextDocument(() => {
@@ -34,9 +38,12 @@ function activate(context) {
     });
 
   context.subscriptions.push(dispose);
-  context.subscriptions.push(() => {
-    watcher.close();
+  context.subscriptions.push({
+    dispose() {
+      watcher.close();
+    }
   });
+
 }
 
 function deactivate() {}
