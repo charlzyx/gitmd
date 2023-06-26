@@ -132,8 +132,8 @@ const gitmd = (docdir) => {
       return;
     }
     const now = dayjs().format("YYYY/MM/DD HH:mm:ss");
-    // 5min
-    if (+Date.now() - lastSync <= 5 * 60 * 1000) {
+    // 2min
+    if (+Date.now() - lastSync > 5 * 60 * 1000) {
       return;
     }
     lastSync = +Date.now();
