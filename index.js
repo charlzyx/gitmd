@@ -178,7 +178,7 @@ const gitmd = (docdir) => {
         .getPortPromise()
         .then((port) => {
           const cli = `npx vitepress dev ${WORKING_DIR} --port=${port}`;
-          spawn(
+          const child = spawn(
             cli,
             {
               shell: true,
@@ -191,7 +191,9 @@ const gitmd = (docdir) => {
               console.log(err, std);
             }
           );
-          return port;
+          return {port, kill: () => {
+            spawn('kill', [child.pid])
+          }};
         });
     },
     worker(onErr = noop) {

@@ -14,12 +14,13 @@ function activate(context) {
     const { type, message } = err;
     vscode.window.showErrorMessage("GITMD ERROR: " + type + message);
   };
-  gitmd.server().then((port) => {
+  gitmd.server().then(({ port, kill }) => {
     const link = "http://localhost:" + port;
     gitmd.worker(onErr);
     setTimeout(() => {
       vscode.commands.executeCommand("vscode.open", link);
     }, 1000);
+    context.subscriptions.push(kill)
   });
 
   const dispose = vscode.workspace.onDidSaveTextDocument(() => {
