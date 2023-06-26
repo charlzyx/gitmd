@@ -6,8 +6,9 @@ const dirTree = require("directory-tree");
 const { spawn, exec, execSync } = require("child_process");
 const { rimrafSync } = require("rimraf");
 const dayjs = require("dayjs");
-var git = require("git-rev-sync");
+const git = require("git-rev-sync");
 
+const noop = () => {};
 const WORKING_DIR = path.join(__dirname, ".tmp");
 
 const gitmd = (docdir) => {
@@ -115,16 +116,28 @@ const gitmd = (docdir) => {
     lastSync: 0,
   };
 
-  const autogit = () => {
+  const autogit = (onErr = noop) => {
     if (!gitEnv.gitDir || !gitEnv.gitBin) {
       return;
     }
     const pre = process.cwd();
-    process.chdir(docRoot);
-    const changed = git.hasUnstagedChanges();
-    process.chdir(pre);
-    if (!changed) return;
+    try {
+      process.chdir(docRoot);
+      const changed = git.hasUnstagedChanges();
+      process.chdir(pre);
+      if (!changed) return;
+    } catch (error) {
+      process.chdir(pre);
+      onErr({ type: "gitsyncerr", message: error });
+      return;
+    }
     const now = dayjs().format("YYYY/MM/DD HH:mm:ss");
+    // 5min
+    if (+Date.now() - lastSync <= 5 * 60 * 1000) {
+      return;
+    }
+    lastSync = +Date.now();
+
     exec(
       `git add . && git commit -m 'autosave at ${now}' && git push `,
       {
@@ -132,7 +145,8 @@ const gitmd = (docdir) => {
       },
       (err) => {
         if (err) {
-          console.error("ERROR AT: git autosave " + err);
+          console.log("giterr ", err);
+          onErr({ type: "git", message: err });
         } else {
           console.log("自动保存于:" + now);
         }
@@ -140,7 +154,7 @@ const gitmd = (docdir) => {
     );
   };
 
-  const workhard = () => {
+  const workhard = (onErr = noop) => {
     rimrafSync(WORKING_DIR, {
       filter: (x) => !/\.vitepress/.test(x),
     });
@@ -150,15 +164,16 @@ const gitmd = (docdir) => {
         filter: (x) => !ignored.test(x),
       });
     } catch (error) {
+      onErr({ type: "fscopy", message: error.message });
       console.error("copy error", error);
     }
 
     makeConfig();
-    autogit();
+    autogit(onErr);
   };
 
   return {
-    server() {
+    server(onErr = noop) {
       return require("portfinder")
         .getPortPromise()
         .then((port) => {
@@ -170,14 +185,17 @@ const gitmd = (docdir) => {
               stdio: "inherit",
             },
             (err, std) => {
+              if (err) {
+                onErr({ type: "servererr", message: err });
+              }
               console.log(err, std);
             }
           );
           return port;
         });
     },
-    worker() {
-      workhard();
+    worker(onErr = noop) {
+      workhard(onErr);
     },
   };
 };
