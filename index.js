@@ -134,10 +134,10 @@ const gitmd = (docdir) => {
     }
     const now = dayjs().format("YYYY/MM/DD HH:mm:ss");
     // 2min
-    if (+Date.now() - lastSync > 5 * 60 * 1000) {
+    if (+Date.now() - gitEnv.lastSync < 2 * 60 * 1000) {
       return;
     }
-    lastSync = +Date.now();
+    gitEnv.lastSync = +Date.now();
 
     exec(
       `git add . && git commit -m 'autosave at ${now}' && git push `,
