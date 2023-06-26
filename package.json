@@ -1,6 +1,6 @@
 {
   "name": "gitmd",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "displayName": "gitmd",
   "description": "一个同步 md 文件夹到 git 的小玩意",
   "engines": {
