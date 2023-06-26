@@ -1,4 +1,8 @@
 const vscode = require("vscode");
+const chokidar = require('chokidar');
+
+const ignored = /(^|[\/\\])\..|node_modules/;
+
 /**
  * @param {vscode.ExtensionContext} context
  */
@@ -22,7 +26,14 @@ function activate(context) {
     gitmd.worker(onErr);
   });
 
+  const watcher = chokidar.watch(cwd, { interval: 2000, ignored: ignored }).on("all", () => {
+    gitmd.worker(onErr);
+  });
+
   context.subscriptions.push(dispose);
+  context.subscriptions.push(() => {
+    watcher.close()
+  });
 }
 
 function deactivate() {}
