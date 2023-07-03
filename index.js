@@ -123,6 +123,7 @@ const gitmd = (docdir) => {
     const pre = process.cwd();
     try {
       process.chdir(docRoot);
+      execSync("git add .");
       const dirty = git.isDirty();
       const changed = dirty || git.hasUnstagedChanges();
       process.chdir(pre);
