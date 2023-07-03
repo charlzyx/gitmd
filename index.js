@@ -34,7 +34,7 @@ const gitmd = (docdir) => {
         }
       }
       if (!title) {
-        const segs = file.splice(path.sep);
+        const segs = file.split(path.sep);
         const filename = segs[segs.length - 1].split(".");
         title = filename[0];
       }
